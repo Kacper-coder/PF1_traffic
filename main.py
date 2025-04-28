@@ -65,7 +65,7 @@ while running:
                 elif reset_ready:
                     # Reset symulacji
                     ball_x = 50
-                    ball_y = 50 #poprawiony reset
+                    ball_y = HEIGHT - 50
                     speed_x = initial_speed * math.cos(angle_radians)
                     speed_y = -initial_speed * math.sin(angle_radians)
 
@@ -101,7 +101,6 @@ while running:
         ball_x += speed_x * time_step
         ball_y += speed_y * time_step
 
-
         # Aktualizacja prędkości i pozycji bez oporu (dla porównania)
         speed_y_no_drag += gravity * time_step
         ball_x_no_drag += speed_x_no_drag * time_step
@@ -112,13 +111,6 @@ while running:
             ball_y = HEIGHT - 50
             simulation_active = False
             reset_ready = True
-
-        #kolizja tej bez oporu, moje kombiowanie coś zmieniło ale wygląda to dziwnie
-        if ball_y_no_drag >= HEIGHT - 45:
-            ball_y_no_drag = HEIGHT - 45
-            speed_y_no_drag = 0
-            speed_x_no_drag = 0
-
 
     # Czyszczenie ekranu
     screen.fill(WHITE)
@@ -139,7 +131,7 @@ while running:
 
     # Rysowanie pocisku bez oporu (jeśli włączone i wciąż w powietrzu)
     if show_comparison and ball_y_no_drag < HEIGHT - 50:
-        pygame.draw.circle(screen, BLUE, (int(ball_x_no_drag), int(ball_y_no_drag)), ball_radius-2)
+        pygame.draw.circle(screen, BLUE, (int(ball_x_no_drag), int(ball_y_no_drag)), ball_radius - 2)
 
     # Informacje tekstowe
     font = pygame.font.SysFont(None, 24)
