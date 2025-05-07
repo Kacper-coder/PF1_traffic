@@ -1,16 +1,17 @@
 import pygame
+import matplotlib.pyplot as plt
 import sys
 import math
 import numpy as np
 from scipy.integrate import odeint
 
 
-pygame.init()
+# pygame.init()
 
 
 WIDTH, HEIGHT = 1000, 800
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Ring Road Traffic Flow Simulation with Traffic Waves")
+# screen = pygame.display.set_mode((WIDTH, HEIGHT))
+# pygame.display.set_caption("Ring Road Traffic Flow Simulation with Traffic Waves")
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -55,7 +56,12 @@ clock = pygame.time.Clock()
 
 #funkcja licząca s_star
 def calculate_s_star(v, delta_v):
-    return s0 + v * T + (v * delta_v) / (2 * math.sqrt(a * b))
+    denominator = 2 * math.sqrt(a * b)
+    if denominator == 0:  # check for division by zero error and recover from that
+        return s0 + v * T  # handle error
+    return s0 + v * T + (v * delta_v) / denominator
+
+
 
 
 #definicja modelu IDM
@@ -79,6 +85,8 @@ def model(state, t):
             delta_x += CIRCUMFERENCE
 
         s = delta_x - vehicle_length
+        if s <= 0.1:
+            s = 0.1
 
         delta_v = velocities[i] - velocities[leader_idx]
 
@@ -103,29 +111,29 @@ def position_to_screen(position):
 
 
 #Rysowanie samochodu
-def draw_car(position, velocity, index):
-    velocity_ratio = min(velocity / v0, 1.0)
-    color = (
-        int(255 * (1 - velocity_ratio)),
-        int(255 * velocity_ratio),
-        0
-    )
-
-    car_pos = position_to_screen(position)
-    car_radius = 8
-    pygame.draw.circle(screen, color, car_pos, car_radius)
-
-    angle = (position / CIRCUMFERENCE) * 2 * math.pi - math.pi / 2
-    indicator_length = car_radius * (0.5 + velocity_ratio)
-    end_x = car_pos[0] - math.cos(angle) * indicator_length
-    end_y = car_pos[1] - math.sin(angle) * indicator_length
-    pygame.draw.line(screen, BLACK, car_pos, (end_x, end_y), 2)
-
-    if NUM_VEHICLES <= 20:
-        font = pygame.font.SysFont(None, 20)
-        text = font.render(f"{index}", True, WHITE)
-        text_rect = text.get_rect(center=car_pos)
-        screen.blit(text, text_rect)
+# def draw_car(position, velocity, index):
+#     velocity_ratio = min(velocity / v0, 1.0)
+#     color = (
+#         int(255 * (1 - velocity_ratio)),
+#         int(255 * velocity_ratio),
+#         0
+#     )
+#
+#     car_pos = position_to_screen(position)
+#     car_radius = 8
+#     pygame.draw.circle(screen, color, car_pos, car_radius)
+#
+#     angle = (position / CIRCUMFERENCE) * 2 * math.pi - math.pi / 2
+#     indicator_length = car_radius * (0.5 + velocity_ratio)
+#     end_x = car_pos[0] - math.cos(angle) * indicator_length
+#     end_y = car_pos[1] - math.sin(angle) * indicator_length
+#     pygame.draw.line(screen, BLACK, car_pos, (end_x, end_y), 2)
+#
+#     if NUM_VEHICLES <= 20:
+#         font = pygame.font.SysFont(None, 20)
+#         text = font.render(f"{index}", True, WHITE)
+#         text_rect = text.get_rect(center=car_pos)
+#         screen.blit(text, text_rect)
 
 
 state = np.concatenate((positions, velocities))
@@ -143,7 +151,7 @@ wave_detection_threshold = 0.6
 previous_slow_vehicle = None
 wave_speed = 0
 
-speed_slider_rect = pygame.Rect(WIDTH - 220, HEIGHT - 40, 200, 20)
+# speed_slider_rect = pygame.Rect(WIDTH - 220, HEIGHT - 40, 200, 20)
 speed_slider_button_radius = 10
 speed_slider_button_pos = WIDTH - 220 + int(simulation_speed * 100)
 is_dragging = False
@@ -157,39 +165,54 @@ frame_count = 0
 cnt = 0 #Dodana inicjalizacja licznika
 
 while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                paused = not paused
-            elif event.key == pygame.K_i:
-                show_info = not show_info
-            elif event.key == pygame.K_w:
-                show_wave_analysis = not show_wave_analysis
-            elif event.key == pygame.K_UP:
-                simulation_speed = min(simulation_speed + 0.1, 2.0)
-            elif event.key == pygame.K_DOWN:
-                simulation_speed = max(simulation_speed - 0.1, 0.1)
-            #Zakłócenie na życzienie pod klawiszem P
-            elif event.key == pygame.K_p:
-                random_vehicle = np.random.randint(0, NUM_VEHICLES)
-                velocities[random_vehicle] *= 0.3
-                state[NUM_VEHICLES + random_vehicle] = velocities[random_vehicle]
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            if speed_slider_rect.collidepoint(event.pos):
-                is_dragging = True
-        elif event.type == pygame.MOUSEBUTTONUP:
-            is_dragging = False
-        elif event.type == pygame.MOUSEMOTION and is_dragging:
-            x = max(speed_slider_rect.left, min(event.pos[0], speed_slider_rect.right))
-            speed_slider_button_pos = x
-            simulation_speed = (x - speed_slider_rect.left) / 200 * 2.0  # 0.0 to 2.0
+    # for event in pygame.event.get():
+    #     if event.type == pygame.QUIT:
+    #         running = False
+    #     elif event.type == pygame.KEYDOWN:
+    #         if event.key == pygame.K_SPACE:
+    #             paused = not paused
+    #         elif event.key == pygame.K_i:
+    #             show_info = not show_info
+    #         elif event.key == pygame.K_w:
+    #             show_wave_analysis = not show_wave_analysis
+    #         elif event.key == pygame.K_UP:
+    #             simulation_speed = min(simulation_speed + 0.1, 2.0)
+    #         elif event.key == pygame.K_DOWN:
+    #             simulation_speed = max(simulation_speed - 0.1, 0.1)
+            # #Zakłócenie na życzienie pod klawiszem P
+            # elif event.key == pygame.K_p:
+            #     random_vehicle = np.random.randint(0, NUM_VEHICLES)
+            #     velocities[random_vehicle] *= 0.3
+            #     state[NUM_VEHICLES + random_vehicle] = velocities[random_vehicle]
+        # elif event.type == pygame.MOUSEBUTTONDOWN:
+            # if speed_slider_rect.collidepoint(event.pos):
+            #     is_dragging = True
+        # elif event.type == pygame.MOUSEBUTTONUP:
+        #     is_dragging = False
+        # elif event.type == pygame.MOUSEMOTION and is_dragging:
+            # x = max(speed_slider_rect.left, min(event.pos[0], speed_slider_rect.right))
+            # speed_slider_button_pos = x
+            # simulation_speed = (x - speed_slider_rect.left) / 200 * 2.0  # 0.0 to 2.0
 
     if not paused:
         adjusted_time_step = time_step * simulation_speed
 
-        new_state = odeint(model, state, [0, adjusted_time_step])[1]
+        # new_state = odeint(model, state, [0, adjusted_time_step])[1]
+
+        try:  # Handle potential errors
+            new_state = odeint(model, state, [0, adjusted_time_step])[1]
+
+        except KeyboardInterrupt:
+            print("Simulation interrupted by user.")
+            running = False  # exit gracefully on Ctrl+C
+            break
+
+        except Exception as e:
+            print(f"An error occurred during integration: {e}")
+            # Add any handling or recovery necessary
+            # For now, it exits the loop to prevent further errors
+            break  # Exit Main loop in case of error
+
         state = new_state
 
         positions = state[:NUM_VEHICLES]
@@ -219,60 +242,90 @@ while running:
         simulation_time += adjusted_time_step
 
     cnt += 1  # Inkrementacja licznika
-    if cnt % 10 == 0:  # Rysowanie co 10. przebieg pętli
-        screen.fill(WHITE)
-
-        pygame.draw.circle(screen, GRAY, ROAD_CENTER, ROAD_RADIUS + ROAD_WIDTH // 2, ROAD_WIDTH)
-        for i in range(NUM_VEHICLES):
-            draw_car(positions[i], velocities[i], i + 1)
-
-        pygame.draw.rect(screen, BLACK, speed_slider_rect, 1)
-        speed_slider_button_pos = speed_slider_rect.left + int(simulation_speed * 100)
-        pygame.draw.circle(screen, BLACK, (speed_slider_button_pos, speed_slider_rect.centery), speed_slider_button_radius)
-
-        font = pygame.font.SysFont(None, 24)
-        speed_text = font.render(f"Speed: {simulation_speed:.1f}x", True, BLACK)
-        screen.blit(speed_text, (WIDTH - 320, HEIGHT - 45))
-
-        if show_info:
-            font = pygame.font.SysFont(None, 24)
-            info_lines = [
-                f"Time: {simulation_time:.1f} s",
-                f"Vehicles: {NUM_VEHICLES}",
-                f"Desired speed: {v0} m/s",
-                f"Mean speed: {np.mean(velocities):.2f} m/s",
-                f"Min speed: {np.min(velocities):.2f} m/s",
-                f"Max speed: {np.max(velocities):.2f} m/s",
-                f"Road length: {CIRCUMFERENCE:.0f} m",
-                f"Vehicle spacing: {CIRCUMFERENCE / NUM_VEHICLES - vehicle_length:.1f} m",
-                "Press SPACE to pause/resume",
-                "Press I to toggle info",
-                "Press P to add perturbation",
-                "Press UP/DOWN to change speed"
-            ]
-
-            y_pos = 10
-            for line in info_lines:
-                text = font.render(line, True, BLACK)
-                screen.blit(text, (10, y_pos))
-                y_pos += 25
-
-            if show_wave_analysis:
-                wave_info = [
-                    "Traffic Wave Analysis:",
-                    f"Slowest vehicle: #{previous_slow_vehicle + 1}",
-                    f"Slowest speed: {np.min(velocities):.2f} m/s",
-                    f"Approx. wave speed: {-wave_speed:.2f} m/s"
-                ]
-
-                for line in wave_info:
-                    text = font.render(line, True, BLACK)
-                    screen.blit(text, (10, y_pos))
-                    y_pos += 25
-
-        pygame.display.flip()
+    # if cnt % 10 == 0:  # Rysowanie co 10. przebieg pętli
+    #     screen.fill(WHITE)
+    #
+    #     pygame.draw.circle(screen, GRAY, ROAD_CENTER, ROAD_RADIUS + ROAD_WIDTH // 2, ROAD_WIDTH)
+    #     for i in range(NUM_VEHICLES):
+    #         draw_car(positions[i], velocities[i], i + 1)
+    #
+    #     pygame.draw.rect(screen, BLACK, speed_slider_rect, 1)
+    #     speed_slider_button_pos = speed_slider_rect.left + int(simulation_speed * 100)
+    #     pygame.draw.circle(screen, BLACK, (speed_slider_button_pos, speed_slider_rect.centery), speed_slider_button_radius)
+    #
+    #     font = pygame.font.SysFont(None, 24)
+    #     speed_text = font.render(f"Speed: {simulation_speed:.1f}x", True, BLACK)
+    #     screen.blit(speed_text, (WIDTH - 320, HEIGHT - 45))
+    #
+    #     if show_info:
+    #         font = pygame.font.SysFont(None, 24)
+    #         info_lines = [
+    #             f"Time: {simulation_time:.1f} s",
+    #             f"Vehicles: {NUM_VEHICLES}",
+    #             f"Desired speed: {v0} m/s",
+    #             f"Mean speed: {np.mean(velocities):.2f} m/s",
+    #             f"Min speed: {np.min(velocities):.2f} m/s",
+    #             f"Max speed: {np.max(velocities):.2f} m/s",
+    #             f"Road length: {CIRCUMFERENCE:.0f} m",
+    #             f"Vehicle spacing: {CIRCUMFERENCE / NUM_VEHICLES - vehicle_length:.1f} m",
+    #             "Press SPACE to pause/resume",
+    #             "Press I to toggle info",
+    #             "Press P to add perturbation",
+    #             "Press UP/DOWN to change speed"
+    #         ]
+    #
+    #         y_pos = 10
+    #         for line in info_lines:
+    #             text = font.render(line, True, BLACK)
+    #             screen.blit(text, (10, y_pos))
+    #             y_pos += 25
+    #
+    #         if show_wave_analysis:
+    #             wave_info = [
+    #                 "Traffic Wave Analysis:",
+    #                 f"Slowest vehicle: #{previous_slow_vehicle + 1}",
+    #                 f"Slowest speed: {np.min(velocities):.2f} m/s",
+    #                 f"Approx. wave speed: {-wave_speed:.2f} m/s"
+    #             ]
+    #
+    #             for line in wave_info:
+    #                 text = font.render(line, True, BLACK)
+    #                 screen.blit(text, (10, y_pos))
+    #                 y_pos += 25
+    #
+    #     pygame.display.flip()
 
     #clock.tick(60)
+currents = []
+densities = []
 
-pygame.quit()
+for num_vehicles in range(1, 2001, 100):  # Iterate from 0 to 1000 vehicles
+    # Initial conditions for current num_vehicles
+    init_positions = np.linspace(0, CIRCUMFERENCE, num_vehicles, endpoint=False)
+    init_velocities = np.ones(
+        num_vehicles) * v0  # You can add some small random variation here if needed:  - np.random.rand(NUM_VEHICLES)
+    state = np.concatenate((init_positions, init_velocities))
+
+    # Simulate for a short period to reach a stable state for each vehicle count
+    t = np.linspace(0, 50,
+                    100)  # Simulate for 50 seconds. Adjust simulation length and/or steps as needed for stable state for all vehicle numbers.
+    sim_data = odeint(model, state, t)
+    final_velocities = sim_data[-1, num_vehicles:]  # Velocities in the last step of the simulation
+
+    # Calculate current and density
+    car_density = num_vehicles / CIRCUMFERENCE
+    average_velocity = np.mean(final_velocities)  # Average velocity in the last step
+    current = car_density * average_velocity
+
+    currents.append(current)
+    densities.append(car_density)
+
+plt.scatter(densities, currents)
+plt.xlabel("Car Density (cars/meter)")
+plt.ylabel("Car Current (cars/second)")
+plt.title("Fundamental Diagram of Traffic Flow")
+plt.grid(True)
+plt.show()
+
+# pygame.quit()
 sys.exit()
